@@ -1,0 +1,88 @@
+2024/09/03 14:47:41 client.go:56: Syncing Begineing ...
+2024/09/03 14:47:42 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 14:50:35 client.go:56: Syncing Begineing ...
+2024/09/03 14:50:37 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 14:52:32 client.go:56: Syncing Begineing ...
+2024/09/03 14:52:42 portal.go:349: Get "https://batkap.com/site/api/v1/manage/store/orders?page=1&size=20&status=fulfilled&start=1403/06/13": net/http: TLS handshake timeout
+2024/09/03 14:52:42 portal.go:498: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 14:54:43 client.go:56: Syncing Begineing ...
+2024/09/03 14:54:46 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 14:54:46 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 14:57:41 client.go:56: Syncing Begineing ...
+2024/09/03 14:57:43 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 14:57:43 portal.go:498: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 15:05:56 client.go:56: Syncing Begineing ...
+2024/09/03 15:05:58 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 15:05:58 portal.go:498: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 16:29:30 client.go:56: Syncing Begineing ...
+2024/09/03 16:29:33 portal.go:361: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 16:29:33 portal.go:498: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 16:35:31 client.go:56: Syncing Begineing ...
+2024/09/03 16:35:31 client.go:65: map[ITEM_DETAIL_ID:491521 LAST_GIV_PURCHASE:2024-09-03 12:05:02 LAST_PORTAL_PURCHASE: PORTAL_PASS:123Hesam999 PORTAL_USER:09128330421 WEB_TOKEN:7490846e-3804-4e6c-96b3-fca0ae0d80bb]
+2024/09/03 16:35:31 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 16:40:08 client.go:56: Syncing Begineing ...
+2024/09/03 16:40:09 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 16:40:09 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/03 16:43:38 portal.go:323: Post "https://batkap.com/site/api/v1/user/create-session": EOF
+2024/09/03 16:44:53 client.go:56: Syncing Begineing ...
+2024/09/03 16:44:54 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/03 16:44:54 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 15:52:15 client.go:56: Syncing Begineing ...
+2024/09/04 15:52:18 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 15:52:18 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 17:23:15 client.go:56: Syncing Begineing ...
+2024/09/04 17:23:17 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 17:23:17 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 17:48:18 client.go:56: Syncing Begineing ...
+2024/09/04 17:48:20 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 17:48:20 portal.go:499: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 17:54:56 client.go:56: Syncing Begineing ...
+2024/09/04 17:54:58 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 17:54:58 portal.go:500: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 17:56:49 client.go:56: Syncing Begineing ...
+2024/09/04 17:56:50 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 17:56:50 portal.go:501: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 18:12:52 client.go:57: Syncing Begineing ...
+2024/09/04 18:12:55 portal.go:362: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 18:12:55 portal.go:501: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 18:22:10 client.go:57: Syncing Begineing ...
+2024/09/04 18:22:10 portal.go:501: Get "http://91.92.214.97:8201/api/quantityonhand?lastDate=2024-09-03 12:05:02": EOF
+2024/09/04 18:27:07 client.go:57: Syncing Begineing ...
+2024/09/04 18:27:07 portal.go:503: Get "http%3A%2F%2F91.92.214.97%3A8201%2Fapi%2Fquantityonhand%3FlastDate%3D2024-09-03+12%3A05%3A02": unsupported protocol scheme ""
+2024/09/04 18:30:34 client.go:57: Syncing Begineing ...
+2024/09/04 18:30:36 portal.go:363: There was an error while decoding orders EOF the main Body : {"success":true,"total":0,"count":0,"orders":null} 
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
+2024/09/04 18:30:48 portal.go:528: error while Updating order from giv to portal EOF
