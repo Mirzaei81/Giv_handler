@@ -2,19 +2,18 @@ package portal
 
 import (
 	"bytes"
-	"encoding/gob"
+	"encoding/binary"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	givsoft "giv/givsoft"
 	"io"
 	"log"
 	"net/http"
-	net_url "net/url"
 	"os"
-	"reflect"
-	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/peterbourgon/diskv/v3"
@@ -23,64 +22,34 @@ import (
 
 var DB *diskv.Diskv
 
-// var color_names = []string{"مشکی", "قهوه‌ای", "عسلی", "قرمز", "بنفش", "سفید"}
-// var color_ids = []int{153239968, 153239969, 169088539, 153239973, 153239966, 153239964}
-//
-//	var category_to_portalID = map[string][]int{
-//		"001": {157759245, 157760171},
-//		"002": {169074151},
-//		"003": {157760171},
-//		"004": {169075112, 169075118},
-//		"005": {169074735},
-//		"006": {169121062, 169121073},
-//		"007": {157759245},
-//		"008": {169075118},
-//		"009": {153239952},
-//		"010": {169074599, 169075052},
-//		"011": {169074599, 169075052},
-//		"012": {153239952},
-//		"013": {169074727, 159213279},
-//		"014": {169074922},
-//		"015": {153239952},
-//		"016": {153239952},
-//		"017": {157759245, 157760171},
-//		"018": {153239952},
-//		"019": {158916151},
-//		"020": {153239952},
-//		"021": {153239952},
-//		"022": {153239952},
-//		"023": {169075351},
-//		"024": {153239952},
-//		"025": {169075351},
-//		"026": {153239952},
-//		"027": {169074919},
-//		"028": {153239952},
-//		"029": {153239952},
-//		"030": {169075351},
-//		"031": {169075354},
-//		"032": {157760108},
-//		"033": {169075118},
-//		"034": {169075027},
-//		"035": {169075354},
-//		"036": {169075027},
-//		"037": {169075351},
-//		"038": {169075103},
-//		"039": {169075112, 169075118},
-//		"040": {169075038},
-//		"041": {169075354},
-//		"042": {157760278},
-//		"043": {157758929},
-//		"044": {157760171},
-//		"045": {169074151},
-//		"046": {169075351},
-//		"047": {153239952},
-//		"048": {153239952},
-//		"049": {159213279},
-//		"050": {153239952},
-//		"051": {153239952},
-//	}
-var base_url string = "https://batkap.com/site/"
+var base_url string = "https://batkap.com"
 
+type Update_Resault struct {
+	Success  bool `json:"success"`
+	Total    int  `json:"total"`
+	Count    int  `json:"count"`
+	Variants []struct {
+		ID           int      `json:"id"`
+		ProductID    int      `json:"product_id"`
+		Title        string   `json:"title"`
+		Price        int      `json:"price"`
+		ComparePrice any      `json:"compare_price"`
+		Tax          any      `json:"tax"`
+		Shipping     any      `json:"shipping"`
+		Weight       any      `json:"weight"`
+		Length       any      `json:"length"`
+		Width        any      `json:"width"`
+		Height       any      `json:"height"`
+		Stock        int      `json:"stock"`
+		Minimum      any      `json:"minimum"`
+		Maximum      any      `json:"maximum"`
+		Sku          string   `json:"sku"`
+		Image        any      `json:"image"`
+		Type         string   `json:"type"`
+		Status       []string `json:"status"`
+		Files        any      `json:"files"`
+	} `json:"variants"`
+}
 type Order_result struct {
 	Success bool `json:"success"`
 	Order   struct {
@@ -125,8 +94,13 @@ type Order_result struct {
 			Longitude float64 `json:"longitude"`
 		} `json:"contact"`
 		Items []struct {
-			Variant  any     `json:"variant"`
-			Product  any     `json:"product"`
+			Variant *struct {
+				ID  int `json:"id"`
+				Sku any `json:"sku"`
+			} `json:"variant"`
+			Product *struct {
+				ID int `json:"id"`
+			} `json:"product"`
 			Title    string  `json:"title"`
 			Price    int     `json:"price"`
 			Quantity int     `json:"quantity"`
@@ -138,7 +112,7 @@ type Order_result struct {
 		} `json:"items"`
 		Coupons   any `json:"coupons"`
 		Shipments any `json:"shipments"`
-		Payments  []struct {
+		Payments  []*struct {
 			ID          int      `json:"id"`
 			Description any      `json:"description"`
 			ReferenceID string   `json:"reference_id"`
@@ -165,7 +139,7 @@ type Order_result struct {
 				Owner string `json:"owner"`
 			} `json:"gateway"`
 		} `json:"payments"`
-		User struct {
+		User *struct {
 			ID           int    `json:"id"`
 			Username     string `json:"username"`
 			Name         any    `json:"name"`
@@ -300,9 +274,14 @@ type session_resault struct {
 	Description string `json:"description"`
 	Token       string `json:"token"`
 }
+type csvPath struct {
+	Success     bool   `json:"success"`
+	Description string `json:"description"`
+	Path        string `json:"path"`
+}
 
 func Make_session() string {
-	url := base_url + "api/v1/user/create-session"
+	url := base_url + "/site/api/v1/user/create-session"
 	method := "POST"
 	user := os.Getenv("PORTAL_USER")
 	password := os.Getenv("PORTAL_PASS")
@@ -328,58 +307,81 @@ func Make_session() string {
 	var Token_res session_resault
 	err = dec.Decode(&Token_res)
 	if err != nil {
-		log.Fatal(err)
+		body, _ := io.ReadAll(res.Body)
+		log.Println(res.StatusCode, "|-|", string(body))
+		log.Printf("there was an error while decoding %+v\n", err)
+		os.Exit(1)
 	}
-	return Token_res.Token
+	if res.StatusCode != 200 {
+		log.Println(url, payload_string)
+		log.Printf("Token Not Found %s", res.Status)
+		os.Exit(-1)
+	} else {
+		return Token_res.Token
+	}
+	return ""
 }
-func Get_orders(token string) {
-	todayJ := Jalaali.Now().Format("yyy/MM/dd")
-	url := base_url + fmt.Sprintf("api/v1/manage/store/orders?page=1&size=20&status=fulfilled&start=%s", todayJ)
-	method := "GET"
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	req.Header.Add("Content-Type", "Application/json")
-	req.Header.Set("Accept-Encoding", "identity")
-	req.Close = true
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	res, err := client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Printf("somthing is wrong with the Body %s\n", err)
-	}
-	decoder := json.NewDecoder(res.Body)
-	var orders Orders
-	err = decoder.Decode(&orders)
-	if err != nil {
-		log.Printf("There was an error while decoding orders %s the main Body : %s \n", err, body)
-		return
-	}
-	lastPortalPurchase := os.Getenv("LAST_PORTAL_PURCHASE")
-	for _, order := range orders.Orders {
-		if string(order.ID) == lastPortalPurchase {
-			go get_Order(token, order.ID)
+func Get_orders(token string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	todayJ := Jalaali.Now().AddDate(0, 0, 0).Format("yyy/MM/dd")
+	status := []string{"paid", "cash_on_delivery"}
+	for _, s := range status {
+		url := base_url + fmt.Sprintf("/site/api/v1/manage/store/orders?page=1&size=20&status=%s&payment=&start=%s&end=&label_id=&user_id=&shipping_id=&ip=&keywords=", s, todayJ)
+		method := "GET"
+		log.Print(url)
+		client := &http.Client{}
+		req, err := http.NewRequest(method, url, nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		req.Header.Add("Content-Type", "Application/json")
+		req.Close = true
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer res.Body.Close()
+
+		if err != nil {
+			log.Printf("somthing is wrong with the Body %s\n", err)
+			return
+		}
+
+		decoder := json.NewDecoder(res.Body)
+		var orders Orders
+		err = decoder.Decode(&orders)
+		if err != nil {
+			log.Printf("There was an error while decoding orders %s\n", err)
+			return
+		}
+		lastPortalPurchase, _ := DB.Read("LAST_PORTAL_PURCHASE")
+		lastPortalPurchaseValue := binary.LittleEndian.Uint32(lastPortalPurchase)
+
+		if orders.Count > 0 {
+			for _, order := range orders.Orders {
+				if uint32(order.ID) == lastPortalPurchaseValue {
+					break
+				}
+				wg.Add(1)
+				go get_Order(token, order.ID, wg)
+			}
+			buf := make([]byte, 4) // adjust size according to your int type
+			binary.LittleEndian.PutUint32(buf, uint32(orders.Orders[0].ID))
+			DB.Write("LAST_PORTAL_PURCHASE", buf)
 		}
 	}
-	if len(orders.Orders) > 0 {
-		os.Setenv("LAST_PORTAL_PURCHASE", string(orders.Orders[0].ID))
-	}
 }
-func get_Order(token string, order_id int) {
+func get_Order(token string, order_id int, wg *sync.WaitGroup) {
+	defer wg.Done()
 	url := fmt.Sprintf("https://batkap.com/site/api/v1/manage/store/orders/%d", order_id)
+	log.Printf("Getting order Detail %d\n", order_id)
 	method := "GET"
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, nil)
-	date := Jalaali.Now().Format("060102")
 	if err != nil {
 		log.Println(err)
 		return
@@ -392,142 +394,175 @@ func get_Order(token string, order_id int) {
 		return
 	}
 	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	log.Println(string(body))
 	decder := json.NewDecoder(res.Body)
 	var order_resault Order_result
 	decder.Decode(&order_resault)
 	if err != nil {
+		body, _ := json.Marshal(order_resault)
+		log.Println(body)
 		log.Println(err)
 		return
 	}
-	PersonId := string(order_resault.Order.User.ID)
-	if DB.Has(PersonId) {
-		PersonIdb, err := DB.Read(PersonId)
-		if err != nil {
-			log.Printf("Somthing Wen wrong oops %s\n", err)
+	if order_resault.Success {
+		var order_detail givsoft.Order_detail
+		var ItemDetail []givsoft.Itemdetail
+		var date_created_formated string
+		if order_resault.Order.Payments != nil {
+			date_created, _ := time.Parse("02/01/2006 15:04:05", order_resault.Order.Payments[0].Created.Universal)
+			date_created_formated = date_created.Format("2006/01/02 15:04:05")
+		} else {
+			date_created_formated = time.Now().Format("2006/01/02 15:04:05")
 		}
-		PersonId = string(PersonIdb)
-	} else {
-		PersonId = givsoft.Create_customer(string(order_resault.Order.User.ID), order_resault.Order.Contact.Name, order_resault.Order.Contact.City.Name, order_resault.Order.Contact.Address, order_resault.Order.Contact.Mobile, order_resault.Order.Contact.Zipcode)
-	}
-	date_created, _ := time.Parse("02/01/2006 15:04:05", order_resault.Order.Payments[0].Created.Universal)
-	date_created_formated := date_created.Format("2006/01/02 15:04:05")
-	itemDetail := make([]givsoft.Itemdetail, 0)
-	for _, item := range order_resault.Order.Items {
-		if reflect.TypeOf(item.Sku) == reflect.TypeOf("string") {
+		date := Jalaali.Now().Format("yyyyMMdd")
+		total_price := 0
+		for _, item := range order_resault.Order.Items {
 			if item.Sku != nil {
-				itemId, _ := strconv.Atoi(*item.Sku)
-				itemDetail = append(itemDetail, givsoft.Itemdetail{
-					ItemID:      itemId,
-					ItemBarcode: *item.Sku,
-					Quantity:    item.Quantity,
-					Fee:         item.Price,
-					DateCreated: date_created_formated,
-					DateChanged: date_created_formated,
+				total_price += item.Price
+				itemId, _ := strconv.ParseInt(*item.Sku, 10, 64)
+				ItemDetail = append(ItemDetail, givsoft.Itemdetail{
+					ItemDetailID: itemId,
+					OrderID:      order_id,
+					ItemID:       itemId,
+					ItemBarcode:  *item.Sku,
+					Quantity:     item.Quantity,
+					Fee:          item.Price,
+					DateCreated:  date_created_formated,
+					DateChanged:  date_created_formated,
 				})
 			}
 		}
+		PersonId := new(string)
+		if order_resault.Order.User != nil {
+			*PersonId = strconv.FormatInt(int64(order_resault.Order.User.ID), 10) // portal User Id
+			if DB.Has(*PersonId) {
+				PersonIdb, err := DB.Read(*PersonId)
+				if err != nil {
+					log.Printf("Somthing Wen wrong oops %s\n", err)
+				}
+				*PersonId = strconv.FormatUint(uint64(binary.LittleEndian.Uint32(PersonIdb)), 10)
+				log.Println("we have PersonID" + *PersonId)
+			} else {
+				log.Println("we don't have PersonID ")
+				*PersonId = givsoft.Create_customer(strconv.FormatInt(int64(order_resault.Order.User.ID), 10), order_resault.Order.Contact.Name, order_resault.Order.Contact.City.Name, order_resault.Order.Contact.Address, order_resault.Order.Contact.Mobile, order_resault.Order.Contact.Zipcode)
+			}
+		} else {
+			*PersonId = "ناشناخته"
+		}
+		if PersonId == nil {
+			log.Println(PersonId)
+			return
+		}
+		order_detail = givsoft.Order_detail{
+			OrderID:            -1,
+			SourceID:           order_resault.Order.ID,
+			Type:               "SALE",
+			No:                 order_resault.Order.ID,
+			Date:               date,
+			EffectiveDate:      date,
+			PersonID:           *PersonId,
+			CouponCode:         "",
+			Description:        "سفارش خرید از پرتال",
+			TotalQuantity:      order_resault.Order.Quantity,
+			TotalPrice:         total_price,
+			TotalDiscount:      0,
+			PackingCost:        0,
+			TransferCost:       0,
+			PostRefCode:        strconv.FormatInt(int64(order_resault.Order.ID), 10),
+			ReceiverName:       order_resault.Order.Contact.Name,
+			ReceiverCity:       order_resault.Order.Contact.City.Name,
+			ReceiverAddress:    order_resault.Order.Contact.Address,
+			ReceiverMobile:     order_resault.Order.Contact.Mobile,
+			ReceiverPostalCode: order_resault.Order.Contact.Zipcode,
+			PaymentType:        "",
+			PaymentStatus:      "",
+			DateCreated:        date_created_formated,
+			DateChanged:        date_created_formated,
+		}
+		if len(order_resault.Order.Payments) > 0 {
+			order_detail.PaymentBank = order_resault.Order.Payments[0].Gateway.Title
+			order_detail.PaymentType = order_resault.Order.Payments[0].Gateway.Type
+			order_detail.PaymentStatus = order_resault.Order.Payments[0].Status[0]
+			order_detail.PaymentBankRefCode = order_resault.Order.Payments[0].ReferenceID
+		} else {
+			order_detail.PaymentType = "ONLINE"
+			order_detail.PaymentStatus = "PAYMENT_STATUS_SUCCESSFUL"
+		}
+		order_detail.ItemDetail = ItemDetail
+		wg.Add(1)
+		go givsoft.Make_Order(order_detail, wg)
+	} else {
+		log.Println(order_resault.Success)
 	}
-	order_detail := givsoft.Order_detail{
-		OrderID:            -1,
-		SourceID:           order_resault.Order.ID,
-		Type:               "WEB",
-		No:                 order_resault.Order.ID,
-		Date:               date,
-		EffectiveDate:      date,
-		PersonID:           PersonId,
-		CouponCode:         "",
-		Description:        "سفارش خرید از پرتال",
-		TotalQuantity:      order_resault.Order.Quantity,
-		TotalPrice:         order_resault.Order.Price,
-		TotalDiscount:      0,
-		PackingCost:        0,
-		TransferCost:       0,
-		PostRefCode:        string(order_resault.Order.ID),
-		ReceiverName:       order_resault.Order.Contact.Name,
-		ReceiverCity:       order_resault.Order.Contact.City.Name,
-		ReceiverAddress:    order_resault.Order.Contact.Address,
-		ReceiverMobile:     order_resault.Order.Contact.Mobile,
-		ReceiverPostalCode: order_resault.Order.Contact.Zipcode,
-		PaymentBank:        order_resault.Order.Payments[0].Gateway.Title,
-		PaymentType:        order_resault.Order.Payments[0].Gateway.Type,
-		PaymentStatus:      order_resault.Order.Payments[0].Status[0],
-		PaymentBankRefCode: order_resault.Order.Payments[0].ReferenceID,
-		DateCreated:        date_created_formated,
-		DateChanged:        date_created_formated,
-	}
-	go givsoft.Make_Order(order_detail)
 }
-func Update_Product(token string, product_id int, stock int) {
-	url := fmt.Sprintf("https://batkap.com/site/api/v1/manage/store/products/%d", product_id)
-	method := "PUT"
-	product := get_product(product_id, token)
-	product.Product.Variants[0].Stock = stock
-	product_byte, err := json.Marshal(product)
-	if err != nil {
-		log.Fatal(err)
-	}
-	payload := strings.NewReader(string(product_byte))
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	res, err := client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer res.Body.Close()
-}
-func Quantityonhand(token string) {
-	url := fmt.Sprintf("http://91.92.214.97:8201/api/quantityonhand?lastDate=%s", net_url.QueryEscape(os.Getenv("LAST_GIV_PURCHASE")))
+
+// Call For all variants
+func GetVariants(token string) {
+	url := "https://batkap.com/site/api/v1/manage/store/products/variants/export"
 	method := "GET"
 	req, err := http.NewRequest(method, url, nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-	req.Close = true
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("WEB_TOKEN", os.Getenv("WEB_TOKEN"))
 	client := &http.Client{}
 	res, err := client.Do(req)
-	fmt.Print(res)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println(res.StatusCode)
 	defer res.Body.Close()
-	var qoh givsoft.QuantityOnhand
 	if err != nil {
-		log.Printf("Error while Setting Env variable %s\n", err)
-		os.Exit(1)
+		fmt.Println(err)
+		os.Exit(-1)
 	}
 	decoder := json.NewDecoder(res.Body)
-	decoder.Decode(&qoh)
-	err = os.Setenv("LAST_GIV_PURCHASE", qoh.LastDatetime)
+	csvPath := new(csvPath)
+	decoder.Decode(csvPath)
+	readCsv(csvPath.Path, token)
+
+}
+func readCsv(uri string, token string) {
+	url := base_url + uri
+	method := "GET"
+	req, err := http.NewRequest(method, url, nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	fmt.Println("getting new Csv File", url)
+
 	if err != nil {
-		log.Print(err)
-		debug.PrintStack()
-		os.Exit(1)
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-	fmt.Printf("the Last GIV Purchase updated %s ->last datetime to check : %s\n", os.Getenv("LAST_GIV_PURCHASE"), qoh.LastDatetime)
-	for _, item := range qoh.Value {
-		itemDescb, _ := DB.Read(string(item.ItemID)) //getting ItemId from Giv map to Portal Item Id",
-		r := bytes.NewReader(itemDescb)
-		dec := gob.NewDecoder(r)
-		var itemDesc GP_PP
-		err = dec.Decode(&itemDesc)
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	defer res.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	reader := csv.NewReader(bytes.NewBuffer(body))
+	todayJ := Jalaali.Now().AddDate(0, 0, 0).Format("yyy-MM-dd")
+	os.WriteFile(todayJ+".csv", body, 0777)
+	_, err = reader.Read()
+	if err != nil {
+		fmt.Print(err)
+		os.Exit(-1)
+	}
+	for {
+		line, err := reader.Read()
 		if err != nil {
-			log.Printf("error while Updating order from giv to portal %s\n", err)
-			continue
+			if err == io.EOF {
+				log.Println(err)
+				break
+			}
 		}
-		Update_Product(token, itemDesc.product_id, int(item.ItemQuantityOnHand))
+		if line[8] != "" {
+			itemId, _ := strconv.ParseInt(line[0], 10, 64)
+			log.Printf("Updating variant : %s with Sku Of %s", line[2], line[8])
+			givsoft.QuantityOnhand_byitem(token, line[8], int(itemId),false)
+		}
 	}
 }

@@ -8,6 +8,8 @@ require (
 	github.com/yaa110/go-persian-calendar v1.2.1
 )
 
-require github.com/google/btree v1.0.0 // indirect
-
-replace giv/givSoft => ../givSoft
+require (
+	github.com/google/btree v1.0.0 // indirect
+	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+)
